@@ -1,0 +1,7 @@
+- Create a folder titled potential_spam & spam_attachments inside the SpamScan folder.
+- Place suspicous .eml file into potential spam folder.
+- Generate the required info for Munin
+- Run main.py
+    - Will extract all attachments from the .eml
+    - Generate a hash for the file
+    - Check the hash on any server setup within the munin.ini file.
