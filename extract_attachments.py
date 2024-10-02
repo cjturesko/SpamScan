@@ -71,7 +71,7 @@ def extract_attachments(eml_filename, output_dir):
 
 def process_eml_files(spam_folder, attachments_folder):
     # Save the hashes.txt file in the attachments folder
-    hash_output_file = os.path.join(attachments_folder, "hashes.txt")
+    # hash_output_file = os.path.join(attachments_folder, "hashes.txt")
     
     # Loop through all .eml files in the "potential_spam" folder
     for filename in os.listdir(spam_folder):
@@ -80,7 +80,7 @@ def process_eml_files(spam_folder, attachments_folder):
             print(f"Processing {eml_path}...")
             extract_attachments(eml_path, attachments_folder)
 
-    return hash_output_file # return the path of the hash file
+    # return hash_output_file # return the path of the hash file
     
 
 def main():
