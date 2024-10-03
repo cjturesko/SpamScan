@@ -3,7 +3,7 @@ import configparser
 import json
 import requests
 from extract_attachments import process_eml_files
-from calculate_hash import hash_files_in_folder
+#from calculate_hash import hash_files_in_folder
 
 config = configparser.ConfigParser()
 config.read('./SpamScan/config.ini')
@@ -11,6 +11,8 @@ config.read('./SpamScan/config.ini')
 VIRUSTOTAL_API_KEY = config['DEFAULT']['VT_API_KEY']
 MAL_SHARE_API_KEY = config['DEFAULT']['MAL_SHARE_API_KEY']
 MAL_BAZAR_API_KEY = config['DEFAULT']['MAL_BAZAR_API_KEY']
+MX_API_KEY = config['DEFAULT']['MX_API_KEY']
+UURLSCAN_API_KEY = config['DEFAULT']['URLSCAN_API_KEY']
 RESULTS = config['HASHES']['RESULTS_TXT']
 
 def process_hashes(hashFile, scanner):
@@ -81,9 +83,9 @@ def main():
     # Output path for results
 
     # Process all .eml files and extract attachments, and generate hashes
-    process_eml_files(spam_folder, attachments_folder)
-    hash_files_in_folder(attachments_folder, hash_file_path)
-
+    process_eml_files(spam_folder, attachments_folder, hash_file_path)
+    #hash_files_in_folder(attachments_folder, hash_file_path)
+    
     process_hashes(hash_file_path,scan_VT)
 
 if __name__== '__main__':
