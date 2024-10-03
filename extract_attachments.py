@@ -1,21 +1,14 @@
-
 from __future__ import print_function
 import sys
 import os
 from email.parser import Parser
-from collections import defaultdict
-from calculate_hash import hash_files_in_folder
-
+import hashlib
 
 def parse_message(filename):
     with open(filename) as f:
         return Parser().parse(f)
 
 def find_attachments(message):
-    """
-    Return a tuple of parsed content-disposition dict, message object
-    for each attachment found.
-    """
     found = []
     for part in message.walk():
         if 'content-disposition' not in part:
@@ -35,17 +28,31 @@ def find_attachments(message):
         found.append((parsed, part))
     return found
 
-def extract_attachments(eml_filename, output_dir):
+def extract_sender_email(message):
+    return message['From']
+
+def sha256_hash_file(file_path):
+    sha256 = hashlib.sha256()
+    with open(file_path, 'rb') as f:
+        while chunk := f.read(8192):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+def extract_attachments(eml_filename, output_dir, hash_output_file):
     msg = parse_message(eml_filename)
     attachments = find_attachments(msg)
+    sender_email = extract_sender_email(msg)
     print("Found {0} attachments...".format(len(attachments)))
+    
+    # Extract domain from sender email
+    sender_domain = sender_email.split('@')[-1].strip('> ')
+    
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     
     attachment_count = 1  # Counter for attachments without filenames
     
     for cdisp, part in attachments:
-        # Assign a default filename if 'filename' key is missing
         cdisp_filename = cdisp.get('filename', f"attachment_{attachment_count}")
         cdisp_filename = os.path.normpath(cdisp_filename)
         if os.path.isabs(cdisp_filename):
@@ -65,31 +72,32 @@ def extract_attachments(eml_filename, output_dir):
         # Write the decoded attachment data to the file
         with open(towrite, 'wb') as fp:
             fp.write(data)
+
+        # Calculate the hash of the written file
+        hash_value = sha256_hash_file(towrite)
+        
+        # Write the domain, filename, and hash to the output file
+        with open(hash_output_file, 'a') as hash_file:
+            hash_file.write(f"{sender_domain}, {cdisp_filename}: {hash_value}\n")
         
         attachment_count += 1  # Increment counter for next attachment
 
-
-def process_eml_files(spam_folder, attachments_folder):
-    # Save the hashes.txt file in the attachments folder
-    # hash_output_file = os.path.join(attachments_folder, "hashes.txt")
-    
-    # Loop through all .eml files in the "potential_spam" folder
+def process_eml_files(spam_folder, attachments_folder, hash_output_file):
     for filename in os.listdir(spam_folder):
         if filename.endswith(".eml"):
             eml_path = os.path.join(spam_folder, filename)
             print(f"Processing {eml_path}...")
-            extract_attachments(eml_path, attachments_folder)
-
-    # return hash_output_file # return the path of the hash file
-    
+            extract_attachments(eml_path, attachments_folder, hash_output_file)
 
 def main():
-    # Define your directories
-    spam_folder = "./potential_spam"  # Replace with actual path
-    attachments_folder = "./spam_attachments"  # Replace with actual path
+    spam_folder = "./SpamScan/potential_spam"  # Replace with actual path
+    attachments_folder = "./SpamScan/spam_attachments"  # Replace with actual path
+    hash_output_file = "./SpamScan/hashes.txt"  # Path for the hash output file
 
-    # Process all .eml files and extract attachments
-    process_eml_files(spam_folder, attachments_folder)
+    # Ensure the output file is empty before writing
+    open(hash_output_file, 'w').close()
+
+    process_eml_files(spam_folder, attachments_folder, hash_output_file)
 
 if __name__ == '__main__':
     main()
