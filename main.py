@@ -15,6 +15,9 @@ MX_API_KEY = config['DEFAULT']['MX_API_KEY']
 UURLSCAN_API_KEY = config['DEFAULT']['URLSCAN_API_KEY']
 RESULTS = config['HASHES']['RESULTS_TXT']
 
+def checkDomain(hashFile):
+    pass
+
 def process_hashes(hashFile, scanner):
     with open(hashFile, 'r') as file, open(RESULTS, 'w') as result_file:
         for entry in file:
