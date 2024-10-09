@@ -113,7 +113,6 @@ def scan_MS(hash_value):
     print(f"Scan_MS response = {response}")
     if ("Sample not found by hash" in response.content):
         print("MalShare didnt find a result")
-        continue
     else:
         return response
 
