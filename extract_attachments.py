@@ -1,5 +1,4 @@
 from __future__ import print_function
-import sys
 import os
 from email.parser import Parser
 import hashlib
@@ -78,7 +77,7 @@ def extract_attachments(eml_filename, output_dir, hash_output_file):
         
         # Write the domain, filename, and hash to the output file
         with open(hash_output_file, 'a') as hash_file:
-            hash_file.write(f"{sender_domain} | {cdisp_filename}: {hash_value}\n")
+            hash_file.write(f"{sender_domain}|{cdisp_filename}: {hash_value}\n")
         
         attachment_count += 1  # Increment counter for next attachment
 
