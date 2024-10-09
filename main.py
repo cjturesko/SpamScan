@@ -65,14 +65,16 @@ def scan_VT(hash_value):
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
-        data = response.json()
-        return data
+        vtdata = response.json()
+        return vtdata
     else:
         return None
     
 def scan_MS(hash_value):
-        url = f"https://malshare.com/api.php?api_key={MAL_SHARE_API_KEY}&action=search&query={hash_value}"
-        response = requests.get(url)
+    url = f"https://malshare.com/api.php?api_key={MAL_SHARE_API_KEY}&action=search&query={hash_value}"
+    response = requests.get(url)
+    print(f"Scan_MS response = {response}")
+    rturn response
 
 
 def scan_MB(MAL_BAZAR_API_KEY):
