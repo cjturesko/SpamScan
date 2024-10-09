@@ -9,8 +9,10 @@ Prerequisites
       VirusTotal/MalShare/MalwareBazaar/MXToolbox
 
 3. Folder Structure: Inside the SpamScan folder, create two subfolders:
-        potential_spam/: Place suspicious .eml files here.
-        spam_attachments/: Extracted attachments will be saved here.
+   
+   ./potential_spam/ - Place suspicious .eml files here.
+   
+   ./spam_attachments/ - Extracted attachments will be saved here.
 
 Usage
 
