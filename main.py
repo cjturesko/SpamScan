@@ -74,7 +74,7 @@ def scan_MS(hash_value):
     url = f"https://malshare.com/api.php?api_key={MAL_SHARE_API_KEY}&action=search&query={hash_value}"
     response = requests.get(url)
     print(f"Scan_MS response = {response}")
-    rturn response
+    return response
 
 
 def scan_MB(MAL_BAZAR_API_KEY):
