@@ -74,7 +74,11 @@ def scan_MS(hash_value):
     url = f"https://malshare.com/api.php?api_key={MAL_SHARE_API_KEY}&action=search&query={hash_value}"
     response = requests.get(url)
     print(f"Scan_MS response = {response}")
-    return response
+    if ("Sample not found by hash" in response.content):
+        print("MalShare didnt find a result")
+        continue
+    else:
+        return response
 
 
 def scan_MB(MAL_BAZAR_API_KEY):
@@ -92,6 +96,8 @@ def main():
     #hash_files_in_folder(attachments_folder, hash_file_path)
     
     process_hashes(hash_file_path,scan_VT)
+    process_hashes(hash_file_path,scan_MS)
+    
 
 if __name__== '__main__':
      main()
