@@ -7,8 +7,12 @@
     - MXTOOLBOX
 - Run main.py
     - Will extract all attachments from the .eml
-    - Generate a hash for any extracted attachments
-    - Save the sender's domain next to attachment info
-    - Check the sender domain against MXTOOLBOX domain check
-    - Check the hash against VT (adding other scans later)
-    - Print out the results to console & write to RESULTS file in config.ini
+    - Generate a sha256 hash for any extracted attachments
+    - Save the sender's domain next to attachment info in hashes.txt
+          - domain.com|file.txt: 2340000
+  
+    - Uses hashes.txt to check:
+          - Sender domain again MXTOOLBOX domain check
+          - Check hash against VT (addings scans)
+              - doesn't upload file to avoid accidental data leakage
+          - Print out results as it goes & writes to RESULTS in config.ini
