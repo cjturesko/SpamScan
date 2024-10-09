@@ -25,6 +25,9 @@ def process_hashes(hashFile, scanner):
                 filename, hash_value = entry.strip().split(': ')
                 result = scanner(hash_value)
 
+                ####
+                # Results specific to VT
+                ####
                 if result:
                     # Check if any engine marked the file as malicious
                     detected_engines = []
