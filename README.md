@@ -3,9 +3,12 @@
 - Generate the required free API keys to run
     - VirusTotal
     - MalwareShare
-    - MalwareBazar 
+    - MalwareBazar
+    - MXTOOLBOX
 - Run main.py
     - Will extract all attachments from the .eml
     - Generate a hash for any extracted attachments
+    - Save the sender's domain next to attachment info
+    - Check the sender domain against MXTOOLBOX domain check
     - Check the hash against VT (adding other scans later)
     - Print out the results to console & write to RESULTS file in config.ini
