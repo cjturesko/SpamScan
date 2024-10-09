@@ -1,18 +1,33 @@
-- Create a folder titled potential_spam & spam_attachments inside the SpamScan folder.
-- Place suspicous .eml file into potential spam folder.
-- Generate the required free API keys to run
-    - VirusTotal
-    - MalwareShare
-    - MalwareBazar
-    - MXTOOLBOX
-- Run main.py
-    - Will extract all attachments from the .eml
-    - Generate a sha256 hash for any extracted attachments
-    - Save the sender's domain next to attachment info in hashes.txt
-          - domain.com|file.txt: 2340000
-  
-    - Uses hashes.txt to check:
-          - Sender domain again MXTOOLBOX domain check
-          - Check hash against VT (addings scans)
-              - doesn't upload file to avoid accidental data leakage
-          - Print out results as it goes & writes to RESULTS in config.ini
+SpamScan - Email Attachment and Domain Scanner
+
+This tool automates the process of extracting attachments from suspicious .eml files, generating SHA-256 hashes for the attachments, and checking the sender's domain and attachment hashes against various APIs.
+Prerequisites
+
+    API Keys: Obtain the following free API keys and add them to your config.ini file:
+        VirusTotal
+        MalShare
+        MalwareBazaar
+        MXToolbox
+
+    Folder Structure: Inside the SpamScan folder, create two subfolders:
+        potential_spam/: Place suspicious .eml files here.
+        spam_attachments/: Extracted attachments will be saved here.
+
+Usage
+
+    Place Suspicious Emails: Add any suspicious .eml files into the potential_spam/ folder.
+
+    Run the Scanner: Execute main.py to perform the following actions:
+        Extract attachments from each .eml file.
+        Generate a SHA-256 hash for every extracted attachment.
+        Log the sender’s domain and corresponding attachment information in hashes.txt:
+
+        yaml
+
+    domain.com | file.txt: 2340000
+
+Domain and Hash Checks: The tool will then:
+
+    Check the sender's domain against the MXToolbox blacklist.
+    Verify the attachment hash using VirusTotal, without uploading the file (to prevent accidental data leaks).
+    Append the results to the RESULTS section in your config.ini file.
