@@ -3,7 +3,6 @@ import configparser
 import json
 import requests
 from extract_attachments import process_eml_files
-#from calculate_hash import hash_files_in_folder
 
 config = configparser.ConfigParser()
 config.read('./SpamScan/config.ini')
@@ -16,7 +15,42 @@ UURLSCAN_API_KEY = config['DEFAULT']['URLSCAN_API_KEY']
 RESULTS = config['HASHES']['RESULTS_TXT']
 
 def checkDomain(hashFile):
-    pass
+    with open(hashFile, "r") as file, open(RESULTS, 'w') as result_file:
+        for entry in file:
+            try:
+                domainName, ending = entry.strip().split('|')
+                url_base = 'https://mxtoolbox.com/api/v1/lookup/blacklist/'
+                url = url_base + domainName
+                headers = {
+                     'Authorization': mx_api_key
+                     }
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200:
+                    print("Response 200")
+                    responseData = response.json()
+                else:
+                    print("Response not 200!!")
+                    continue
+
+                failed = responseData.get('Failed', [])
+                warnings = responseData.get('Warnings', [])
+
+                if failed:
+                    numFailed = len(failed)
+                    print(f'Domain Failed: {numFailed} Times')
+                    result_file.write(f"{domainName}|BLACKLIST FAIL - {numFailed}|{ending}\n")
+                elif warnings:
+                    numWarnings = len(warnings)
+                    print(f'Domain Warning: {warnings}')
+                    result_file.write(f"{domainName}|BLACKLIST WARNING - {numWarnings}|{ending}\n")
+                else:
+                    #write the line in again regardless since it's open & being overwritten.
+                    result_file.write(f"{domainName}|NO BLACKLIST|{ending}\n")
+                    print(f"The domain {domainName} is not blacklisted.")
+          
+            except ValueError as e:
+                print(f"Error processing entry in Check_domain: {entry}")
+                print(f"Error involving: {e}")
 
 def process_hashes(hashFile, scanner):
     with open(hashFile, 'r') as file, open(RESULTS, 'w') as result_file:
