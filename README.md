@@ -24,7 +24,7 @@ Usage
    - Generate a SHA-256 hash for every extracted attachment.
    - Log the sender’s domain and corresponding attachment information in hashes.txt:
      
-     domain.com | file.txt: 2340000
+     domain.com|file.txt: 2340000
      
 Domain and Hash Checks: The tool will then:
 
