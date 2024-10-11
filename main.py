@@ -107,15 +107,21 @@ def scan_VT(hash_value):
     else:
         return None
     
-def scan_MS(hash_value):
+def scan_MS(hash_value, MAL_SHARE_API_KEY):
     url = f"https://malshare.com/api.php?api_key={MAL_SHARE_API_KEY}&action=search&query={hash_value}"
-    response = requests.get(url)
-    print(f"Scan_MS response = {response}")
-    if ("Sample not found by hash" in response.content):
-        print("MalShare didnt find a result")
+    headers = {'User-Agent': 'MalShare API Tool v/0.1 beta'}
+    print(f'url = {url}')
+    response = requests.get(url, headers=headers)
+    print(f"Scan_MS response ====== {response.text.strip()}")
+    if response is not None:
+    #if response.status_code == 200:
+        if ("Sample not found by hash" in response.text):
+            print("MalShare didnt find a result")
+        else:
+            print(f"Malshare found result {response.text}")
+            return response
     else:
-        return response
-
+        print("Error with reply -- possible offline")
 
 def scan_MB(MAL_BAZAR_API_KEY):
     pass
