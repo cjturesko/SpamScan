@@ -29,5 +29,5 @@ Usage
 Domain and Hash Checks: The tool will then:
 
 - Check the sender's domain against the MXToolbox blacklist.
-- Check the attachment hash against VirusTotal, without uploading the file (to prevent accidental data leaks).
-- Append the results to the RESULTS location in your config.ini file.
+- Check the attachment hash against VirusTotal without uploading the file (to prevent accidental data leaks) & MHR.
+- Print out the results to the console.
