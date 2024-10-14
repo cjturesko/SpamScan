@@ -140,8 +140,35 @@ def scan_MHR(hash_value, MHR_API_KEY)
         print(f"Hash {data['sha1256'] found. AV Detection Rate {data['antivirus_detection_rate']}") 
     
 
-def scan_MB(MAL_BAZAR_API_KEY):
-    pass
+def scan_MB(hash_value, MAL_BAZAR_API_KEY):
+    if MAL_BAZAR_API_KEY == '-' or not MAL_BAZAR_API_KEY:
+        print('Malware Bazaar API Key blank --- skipped')
+        return
+
+    url = "https://mb-api.abuse.ch/api/v1/"
+    headers = {
+        'API-KEY': MAL_BAZAR_API_KEY
+    }
+
+    #data for the post request
+    data = {
+        'query': 'get_info',
+        'hash': hash_value
+    }
+
+    #Make the post request
+    response = requests.post(url, headers=headers, data=data)
+
+    #check response data
+    if response.status_code == 200:
+        result = response.json()
+        return result # return parsed result
+
+    else:
+        print(f"Error: Received status code {response.status_code}. Message: {response.text}")
+        return None
+    
+        
 
 
 def main():
