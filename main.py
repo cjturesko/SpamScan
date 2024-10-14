@@ -16,7 +16,7 @@ UURLSCAN_API_KEY = config['DEFAULT']['URLSCAN_API_KEY']
 RESULTS = config['HASHES']['RESULTS_TXT']
 
 def checkDomain(hashFile):
-    with open(hashFile, "r") as file, open(RESULTS, 'w') as result_file:
+    with open(hashFile, "r") as file: #, open(RESULTS, 'w') as result_file:
         for entry in file:
             try:
                 domainName, ending = entry.strip().split('|')
@@ -38,15 +38,15 @@ def checkDomain(hashFile):
 
                 if failed:
                     numFailed = len(failed)
-                    print(f'Domain Failed: {numFailed} Times')
-                    result_file.write(f"{domainName}|BLACKLIST FAIL - {numFailed}|{ending}\n")
+                    print(f"{domainName}|BLACKLIST FAIL - {numFailed}|{ending}\n")
+                    #result_file.write(f"{domainName}|BLACKLIST FAIL - {numFailed}|{ending}\n")
                 elif warnings:
                     numWarnings = len(warnings)
-                    print(f'Domain Warning: {warnings}')
-                    result_file.write(f"{domainName}|BLACKLIST WARNING - {numWarnings}|{ending}\n")
+                    print(f"{domainName}|BLACKLIST WARNING - {numWarnings}|{ending}\n")
+                    #result_file.write(f"{domainName}|BLACKLIST WARNING - {numWarnings}|{ending}\n")
                 else:
                     #write the line in again regardless since it's open & being overwritten.
-                    result_file.write(f"{domainName}|NO BLACKLIST|{ending}\n")
+                    #result_file.write(f"{domainName}|NO BLACKLIST|{ending}\n")
                     print(f"The domain {domainName} is not blacklisted.")
           
             except ValueError as e:
@@ -70,7 +70,8 @@ def process_hashes(hashFile, scanner):
                 
 def scan_VT(hash_value):
     if VIRUSTOTAL_API_KEY == '-' or not VIRUSTOTAL_API_KEY:
-         print('VirusTotal API Key blank --- skipped')
+        print('VirusTotal API Key blank --- skipped')
+        pass
 
     url = f"https://www.virustotal.com/api/v3/files/{hash_value}"
     headers = {
