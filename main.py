@@ -124,7 +124,7 @@ def scan_MS(hash_value, MAL_SHARE_API_KEY):
     else:
         print("Error with reply -- possible offline")'''
 
-def scan_MHR(hash_value, MHR_API_KEY)
+def scan_MHR(hash_value, MHR_API_KEY):
     if MHR_API_KEY == '-' or not MHR_API_KEY:
         print('MHR API Key blank --- skipped')
         return
