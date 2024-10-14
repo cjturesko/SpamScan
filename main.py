@@ -54,48 +54,20 @@ def checkDomain(hashFile):
                 print(f"Error involving: {e}")
 
 def process_hashes(hashFile, scanner):
-    with open(hashFile, 'r') as file, open(RESULTS, 'w') as result_file:
+    with open(hashFile, 'r') as file:
         for entry in file:
             try:
                 filename, hash_value = entry.strip().split(': ')
                 result = scanner(hash_value)
-                return result
-            else:
-                print(f'Error with hash {entry}')
                 
-
-                ####
-                # Results specific to VT
-                ####
-                '''if result:
-                    # Check if any engine marked the file as malicious
-                    detected_engines = []
-                    clean_engines = []
-
-                    # Loop through the results
-                    for engine, details in result.get("scans", {}).items():
-                        if details['result'] is not None:  # Engine returned a result
-                            detected_engines.append(engine)
-                        else:
-                            clean_engines.append(engine)
-
-                    # Determine the status
-                    if detected_engines:
-                        status = "Malware Detected"
-                        # Write the results to the file
-                        result_file.write(f"{filename}: {hash_value} - {status} (Detected by: {', '.join(detected_engines)})\n")
-                    else:
-                        status = "Clean"
-                        # Write the results to the file
-                        result_file.write(f"{filename}: {hash_value} - {status}\n")
+                if result:
+                    # will vary based on the api
+                    print(f"Hash {hash_value} scanned successfully. Result: {result}\n")
                 else:
-                    # Unknown Hash
-                    result_file.write(f"{filename}: {hash_value} - Not Found")
-
+                    print(f"Hash {hash_value} not found or error occurred.")
             except ValueError:
-                print(f"Error processing line: {entry.strip()}")'''
+                print(f'Error proccessing hash {entry.strip()}')
                 
-
 def scan_VT(hash_value):
     if VIRUSTOTAL_API_KEY == '-' or not VIRUSTOTAL_API_KEY:
          print('VirusTotal API Key blank --- skipped')
@@ -108,9 +80,30 @@ def scan_VT(hash_value):
 
     if response.status_code == 200:
         vtdata = response.json()
-        return vtdata
+
+        #Process VT results
+        detected_engines = []
+        clean_engines = []
+
+        #Loop through results
+        for engine, details in vtdata.get("data", {}).get("attributes", {}).get("last_analysis_results", {}).items():
+            if deatils['result'] is not None: #engine returned a result
+                detected_engines.append(engine)
+            else:
+                clean_engines.append(engine)
+
+        #Determine the status
+        if detected_engines:
+            status = "Malware Detected"
+            return f"Hash {hash_value} - {status} (Detected by: {', '.join(detected_engines)})"
+        else:
+            status = "Clean"
+            return f"Hash {hash_value} - {status}"
+
     else:
-        return None
+        return f"Hash {hash_value} - Not Found"
+
+    
     
 def scan_MS(hash_value, MAL_SHARE_API_KEY):
     pass
