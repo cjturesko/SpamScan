@@ -59,11 +59,15 @@ def process_hashes(hashFile, scanner):
             try:
                 filename, hash_value = entry.strip().split(': ')
                 result = scanner(hash_value)
+                return result
+            else:
+                print(f'Error with hash {entry}')
+                
 
                 ####
                 # Results specific to VT
                 ####
-                if result:
+                '''if result:
                     # Check if any engine marked the file as malicious
                     detected_engines = []
                     clean_engines = []
@@ -89,7 +93,7 @@ def process_hashes(hashFile, scanner):
                     result_file.write(f"{filename}: {hash_value} - Not Found")
 
             except ValueError:
-                print(f"Error processing line: {entry.strip()}")
+                print(f"Error processing line: {entry.strip()}")'''
                 
 
 def scan_VT(hash_value):
