@@ -71,7 +71,7 @@ def process_hashes(hashFile, scanner):
 def scan_VT(hash_value):
     if VIRUSTOTAL_API_KEY == '-' or not VIRUSTOTAL_API_KEY:
         print('VirusTotal API Key blank --- skipped')
-        pass
+        return
 
     url = f"https://www.virustotal.com/api/v3/files/{hash_value}"
     headers = {
