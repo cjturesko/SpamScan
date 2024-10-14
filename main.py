@@ -10,6 +10,7 @@ config.read('./SpamScan/config.ini')
 VIRUSTOTAL_API_KEY = config['DEFAULT']['VT_API_KEY']
 MAL_SHARE_API_KEY = config['DEFAULT']['MAL_SHARE_API_KEY']
 MAL_BAZAR_API_KEY = config['DEFAULT']['MAL_BAZAR_API_KEY']
+MHR_API_KEY = config['DEFAULT']['MHR_API_KEY']
 MX_API_KEY = config['DEFAULT']['MX_API_KEY']
 UURLSCAN_API_KEY = config['DEFAULT']['URLSCAN_API_KEY']
 RESULTS = config['HASHES']['RESULTS_TXT']
@@ -108,7 +109,9 @@ def scan_VT(hash_value):
         return None
     
 def scan_MS(hash_value, MAL_SHARE_API_KEY):
-    url = f"https://malshare.com/api.php?api_key={MAL_SHARE_API_KEY}&action=search&query={hash_value}"
+    pass
+    # Issue with this scan, disregard code.
+    '''url = f"https://malshare.com/api.php?api_key={MAL_SHARE_API_KEY}&action=search&query={hash_value}"
     headers = {'User-Agent': 'MalShare API Tool v/0.1 beta'}
     print(f'url = {url}')
     response = requests.get(url, headers=headers)
@@ -121,7 +124,19 @@ def scan_MS(hash_value, MAL_SHARE_API_KEY):
             print(f"Malshare found result {response.text}")
             return response
     else:
-        print("Error with reply -- possible offline")
+        print("Error with reply -- possible offline")'''
+
+def scan_MHR(hash_value, MHR_API_KEY)
+    url = f"https://hash.cymru.com/v2/{hash_value}"
+    headers = {
+        'Authorization': MHR_API_KEY
+    }
+    response = requests.get(url, headers=headers)
+    if data['sha1256'] == None:
+        print('Hash not found on Malware Hash Registry')
+    else:
+        print(f"Hash {data['sha1256'] found. AV Detection Rate {data['antivirus_detection_rate']}") 
+    
 
 def scan_MB(MAL_BAZAR_API_KEY):
     pass
