@@ -133,10 +133,11 @@ def scan_MHR(hash_value, MHR_API_KEY):
         'Authorization': MHR_API_KEY
     }
     response = requests.get(url, headers=headers)
+    data = response.json()
     if data['sha1256'] == None:
         print('Hash not found on Malware Hash Registry')
     else:
-        print(f"Hash {data['sha1256'] found. AV Detection Rate {data['antivirus_detection_rate']}") 
+        print(f"Hash {data['sha1256']} found. AV Detection Rate {data['antivirus_detection_rate']}") 
     
 
 def scan_MB(hash_value):
