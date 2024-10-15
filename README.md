@@ -6,7 +6,7 @@ Prerequisites
 
 1. API Keys: Obtain the following free API keys and add them to your     config.ini file:
 
-      VirusTotal/MalShare/MalwareBazaar/MXToolbox/Malware Hash Registry (MHR)
+      VirusTotal/MalShare/MXToolbox/Malware Hash Registry (MHR)
 
 3. Folder Structure: Inside the SpamScan folder, create two subfolders:
    
