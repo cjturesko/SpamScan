@@ -22,7 +22,7 @@ def checkDomain(hashFile):
                 url_base = 'https://mxtoolbox.com/api/v1/lookup/blacklist/'
                 url = url_base + domainName
                 headers = {
-                     'Authorization': mx_api_key
+                     'Authorization': MX_API_KEY
                      }
                 response = requests.get(url, headers=headers)
                 if response.status_code == 200:
