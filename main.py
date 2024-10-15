@@ -9,7 +9,6 @@ config.read('./SpamScan/config.ini')
 
 VIRUSTOTAL_API_KEY = config['DEFAULT']['VT_API_KEY']
 MAL_SHARE_API_KEY = config['DEFAULT']['MAL_SHARE_API_KEY']
-MAL_BAZAR_API_KEY = config['DEFAULT']['MAL_BAZAR_API_KEY']
 MHR_API_KEY = config['DEFAULT']['MHR_API_KEY']
 MX_API_KEY = config['DEFAULT']['MX_API_KEY']
 URLSCAN_API_KEY = config['DEFAULT']['URLSCAN_API_KEY']
@@ -140,15 +139,8 @@ def scan_MHR(hash_value, MHR_API_KEY):
         print(f"Hash {data['sha1256'] found. AV Detection Rate {data['antivirus_detection_rate']}") 
     
 
-def scan_MB(hash_value, MAL_BAZAR_API_KEY):
-    if MAL_BAZAR_API_KEY == '-' or not MAL_BAZAR_API_KEY:
-        print('Malware Bazaar API Key blank --- skipped')
-        return
-
+def scan_MB(hash_value):
     url = "https://mb-api.abuse.ch/api/v1/"
-    headers = {
-        'API-KEY': MAL_BAZAR_API_KEY
-    }
 
     #data for the post request
     data = {
