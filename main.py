@@ -87,7 +87,7 @@ def scan_VT(hash_value):
 
         #Loop through results
         for engine, details in vtdata.get("data", {}).get("attributes", {}).get("last_analysis_results", {}).items():
-            if deatils['result'] is not None: #engine returned a result
+            if details['result'] is not None: #engine returned a result
                 detected_engines.append(engine)
             else:
                 clean_engines.append(engine)
