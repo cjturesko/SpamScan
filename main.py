@@ -149,7 +149,7 @@ def scan_MB(hash_value):
     }
 
     #Make the post request
-    response = requests.post(url, headers=headers, data=data)
+    response = requests.post(url, data=data)
 
     #check response data
     if response.status_code == 200:
