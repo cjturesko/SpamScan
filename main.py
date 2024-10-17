@@ -9,7 +9,6 @@ config.read('./SpamScan/config.ini')
 
 VIRUSTOTAL_API_KEY = config['DEFAULT']['VT_API_KEY']
 MAL_SHARE_API_KEY = config['DEFAULT']['MAL_SHARE_API_KEY']
-MHR_API_KEY = config['DEFAULT']['MHR_API_KEY']
 MX_API_KEY = config['DEFAULT']['MX_API_KEY']
 URLSCAN_API_KEY = config['DEFAULT']['URLSCAN_API_KEY']
 RESULTS = config['HASHES']['RESULTS_TXT']
@@ -95,9 +94,12 @@ def scan_VT(hash_value):
         #Determine the status
         if detected_engines:
             status = "Malware Detected"
+            print(f"{status}: VT")
+            print(f"Hash {hash_value} - {status} (Detected by: {', '.join(detected_engines)})")
             return f"Hash {hash_value} - {status} (Detected by: {', '.join(detected_engines)})"
         else:
             status = "Clean"
+            print(f"{status}: VT")
             return f"Hash {hash_value} - {status}"
 
     else:
@@ -105,39 +107,49 @@ def scan_VT(hash_value):
 
     
     
-def scan_MS(hash_value, MAL_SHARE_API_KEY):
-    pass
-    # Issue with this scan, disregard code.
-    '''url = f"https://malshare.com/api.php?api_key={MAL_SHARE_API_KEY}&action=search&query={hash_value}"
+def scan_MS(hash_value):
+    url = f"https://malshare.com/api.php?api_key={MAL_SHARE_API_KEY}&action=search&query={hash_value}"
     headers = {'User-Agent': 'MalShare API Tool v/0.1 beta'}
-    print(f'url = {url}')
     response = requests.get(url, headers=headers)
-    print(f"Scan_MS response ====== {response.text.strip()}")
-    if response is not None:
-    #if response.status_code == 200:
-        if ("Sample not found by hash" in response.text):
-            print("MalShare didnt find a result")
-        else:
-            print(f"Malshare found result {response.text}")
-            return response
+    if response.status_code == 200:
+        try:
+            response_data = json.loads(response.text)
+            
+            if not response_data:
+                print("MalShare didnt find a result")
+            else:
+                print(f"Malshare found result {response_data}")
+            return response_data
+        except json.JSONDecodeError:
+            print("Error: Response not JSON")
     else:
-        print("Error with reply -- possible offline")'''
+        print("Error with reply -- possible offline")
 
-def scan_MHR(hash_value, MHR_API_KEY):
-    if MHR_API_KEY == '-' or not MHR_API_KEY:
-        print('MHR API Key blank --- skipped')
-        return
-    
+def scan_MHR(hash_value, mhr_un, mhr_pw):
+    #issues with return
+    pass
+    '''# The MHR API might not require an API key, just the hash.
     url = f"https://hash.cymru.com/v2/{hash_value}"
-    headers = {
-        'Authorization': MHR_API_KEY
-    }
-    response = requests.get(url, headers=headers)
-    data = response.json()
-    if data['sha1256'] == None:
-        print('Hash not found on Malware Hash Registry')
+    print(f'MHR url: --  {url}')
+    # Make the GET request to the MHR API
+    response = requests.get(url, auth=(mhr_un, mhr_pw))
+    
+    # Check if the response is successful (status code 200)
+    if response.status_code == 200:
+        try:
+            # Parse the response as JSON (assuming it returns JSON data)
+            data = response.json()
+        except ValueError:
+            print("Error: Unable to parse response as JSON")
+            return
+
+        # Check if the hash is found in the registry
+        if data.get('sha1256') is None:
+            print('Hash not found on Malware Hash Registry')
+        else:
+            print(f"Hash {data['sha1256']} found. AV Detection Rate: {data['antivirus_detection_rate']}")
     else:
-        print(f"Hash {data['sha1256']} found. AV Detection Rate {data['antivirus_detection_rate']}") 
+        print(f"Error: Received status code {response.status_code}.")'''
     
 
 def scan_MB(hash_value):
@@ -155,14 +167,13 @@ def scan_MB(hash_value):
     #check response data
     if response.status_code == 200:
         result = response.json()
+        print(f'MB response {result}')
         return result # return parsed result
 
     else:
         print(f"Error: Received status code {response.status_code}. Message: {response.text}")
         return None
     
-        
-
 
 def main():
     spam_folder = "./SpamScan/potential_spam"  # Replace with actual path
@@ -174,8 +185,8 @@ def main():
     process_eml_files(spam_folder, attachments_folder, hash_file_path)
     #hash_files_in_folder(attachments_folder, hash_file_path)
     
-    process_hashes(hash_file_path,scan_VT)
-    process_hashes(hash_file_path,scan_MS)
+    process_hashes(hash_file_path, scan_VT)
+    process_hashes(hash_file_path, scan_MS)
     
 
 if __name__== '__main__':
