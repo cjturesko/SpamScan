@@ -40,7 +40,7 @@ def extract_ip_and_spf(message):
         if 'fail' in spf_header.lower():
             print('--SPF Fail Check on Domain--')
         elif 'softfail' in spf_header.lower():
-            print('--SPF Softfail Check on Domain--"
+            print('--SPF Softfail Check on Domain--')
         if 'client-ip=' in spf_header:
             ip_start = spf_header.find('client-ip=') + len('clent-ip=')
             ip_end = spf_header.find(';', ip_start)
