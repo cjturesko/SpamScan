@@ -184,13 +184,14 @@ def main():
     # Output path for results
 
     # Process all .eml files and extract attachments, and generate hashes
-    #process_eml_files(spam_folder, attachments_folder, hash_file_path)
-    #hash_files_in_folder(attachments_folder, hash_file_path)
-    
-
-    
+    process_eml_files(spam_folder, attachments_folder, hash_file_path)
+    hash_files_in_folder(attachments_folder, hash_file_path)
+    checkDomain(hash_file_path)
+    print("---Domain Check---")
     process_hashes(hash_file_path, scan_VT)
     process_hashes(hash_file_path, scan_MS)
+    process_hashes(hash_file_path, scan_MB)
+    #process_hashes(hash_file_path, scan_MHR)
     
 
 if __name__== '__main__':
