@@ -126,13 +126,13 @@ def scan_MS(hash_value):
         print("Error with reply -- possible offline")
 
 def scan_MHR(hash_value, mhr_un, mhr_pw):
-    #issues with return
     pass
-    '''# The MHR API might not require an API key, just the hash.
+    #issues with SSL but works
+    '''
     url = f"https://hash.cymru.com/v2/{hash_value}"
     print(f'MHR url: --  {url}')
     # Make the GET request to the MHR API
-    response = requests.get(url, auth=(mhr_un, mhr_pw))
+    response = requests.get(url, auth=HTTPBasicAuth(mhr_un, mhr_pw), verify=False)
     
     # Check if the response is successful (status code 200)
     if response.status_code == 200:
@@ -149,8 +149,8 @@ def scan_MHR(hash_value, mhr_un, mhr_pw):
         else:
             print(f"Hash {data['sha1256']} found. AV Detection Rate: {data['antivirus_detection_rate']}")
     else:
-        print(f"Error: Received status code {response.status_code}.")'''
-    
+        print(f"Error: Received status code {response.status_code}.")
+    '''
 
 def scan_MB(hash_value):
     url = "https://mb-api.abuse.ch/api/v1/"
@@ -174,6 +174,8 @@ def scan_MB(hash_value):
         print(f"Error: Received status code {response.status_code}. Message: {response.text}")
         return None
     
+        
+
 
 def main():
     spam_folder = "./SpamScan/potential_spam"  # Replace with actual path
@@ -182,8 +184,10 @@ def main():
     # Output path for results
 
     # Process all .eml files and extract attachments, and generate hashes
-    process_eml_files(spam_folder, attachments_folder, hash_file_path)
+    #process_eml_files(spam_folder, attachments_folder, hash_file_path)
     #hash_files_in_folder(attachments_folder, hash_file_path)
+    
+
     
     process_hashes(hash_file_path, scan_VT)
     process_hashes(hash_file_path, scan_MS)
