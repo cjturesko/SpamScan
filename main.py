@@ -189,8 +189,11 @@ def main():
     checkDomain(hash_file_path)
     print("---Domain Check---")
     process_hashes(hash_file_path, scan_VT)
+    print("---VirusTotal Scan Complete---")
     process_hashes(hash_file_path, scan_MS)
+    print("---Malshare Scan Complete---")
     process_hashes(hash_file_path, scan_MB)
+    print("---Malware Bazaar Scan Complete--")
     #process_hashes(hash_file_path, scan_MHR)
     
 
