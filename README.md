@@ -16,7 +16,7 @@ SpamScan is an automated tool for analyzing suspicious email attachments and sen
    - VirusTotal
    - MalShare
    - MXToolbox
-   - (Malware Hash Registry - currently commented out due to SSL error)
+   - Malware Hash Registry (commented out due to SSL error)
 
    Add these keys to your `config.ini` file.
 
