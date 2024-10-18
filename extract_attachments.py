@@ -30,6 +30,36 @@ def find_attachments(message):
 def extract_sender_email(message):
     return message['From']
 
+'''
+def extract_ip_and_spf(message):
+    ip_address = None
+    spf_result = None
+
+    spf_header = message.get('Received-SPF')
+    if spf_header:
+        if 'fail' in spf_header.lower():
+            print('--SPF Fail Check on Domain--')
+        elif 'softfail' in spf_header.lower():
+            print('--SPF Softfail Check on Domain--"
+        if 'client-ip=' in spf_header:
+            ip_start = spf_header.find('client-ip=') + len('clent-ip=')
+            ip_end = spf_header.find(';', ip_start)
+            ip_address = spf_header[ip_start:ip_end].strip()
+
+    if not ip_address:
+        received_headers = message.get_all('Received')
+        if received_headers:
+            for header in received_headers:
+                if 'from' in header and 'by' in header and 'client-ip=' in header:
+                    ip_start = header.find('client-ip=') + len('client-ip=')
+                    ip_end = header.find(';', ip_start)
+                    ip_address = header[ip_start:ip_end].strip()
+                    break
+                    
+    return ip_address, spf_result
+    '''
+        
+
 def sha256_hash_file(file_path):
     sha256 = hashlib.sha256()
     with open(file_path, 'rb') as f:
