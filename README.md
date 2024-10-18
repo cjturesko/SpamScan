@@ -1,33 +1,76 @@
-SpamScan
+# SpamScan
 
-This tool automates the process of extracting attachments from suspicious .eml files, generating SHA-256 hashes for the attachments, and checking the sender's domain and attachment hashes against various APIs.
+SpamScan is an automated tool for analyzing suspicious email attachments and sender domains. It extracts attachments from .eml files, generates SHA-256 hashes, and checks them against various security APIs to identify potential threats.
 
-Prerequisites
+## Features
 
-1. API Keys: Obtain the following free API keys and add them to your config.ini file:
+- Extracts attachments from .eml files
+- Generates SHA-256 hashes for attachments
+- Checks sender domains against MXToolbox blacklist
+- Verifies attachment hashes using VirusTotal, MalShare, and MalwareBazaar APIs
+- Logs results for easy review and action
 
-      VirusTotal/MalShare/MXToolbox
+## Prerequisites
 
-3. Folder Structure: Inside the SpamScan folder, create two subfolders:
-   
-   ./potential_spam/ - Place suspicious .eml files here.
-   
-   ./spam_attachments/ - Extracted attachments will be saved here.
+1. **API Keys**: Obtain free API keys from the following services:
+   - VirusTotal
+   - MalShare
+   - MXToolbox
+   - (Malware Hash Registry - currently commented out due to SSL error)
 
-Usage
+   Add these keys to your `config.ini` file.
 
-1. Place Suspicious Emails: Add any suspicious .eml files into the potential_spam/ folder.
+2. **Folder Structure**: Create the following subdirectories in your SpamScan folder:
+   ```
+   SpamScan/
+   ├── potential_spam/
+   └── spam_attachments/
+   ```
 
-2. Run the Scanner: Execute main.py to perform the following actions:
+## Installation
 
-   - Extract attachments from each .eml file.
-   - Generate a SHA-256 hash for every extracted attachment.
-   - Log the sender’s domain and corresponding attachment information in hashes.txt:
-     
-     domain.com|file.txt: 2340000
-     
-Domain and Hash Checks: The tool will then:
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/SpamScan.git
+   cd SpamScan
+   ```
 
-- Check the sender's domain against the MXToolbox blacklist.
-- Check the attachment hash against VirusTotal/MalShare/MalwareBazaar without uploading the file (to prevent accidental data leaks).
-- Print out the results with any notices to the console for action. 
+2. Install required dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. Set up your `config.ini` file with the obtained API keys.
+
+## Usage
+
+1. Place suspicious .eml files in the `potential_spam/` folder.
+
+2. Run the scanner:
+   ```
+   python main.py
+   ```
+
+3. The script will perform the following actions:
+   - Extract attachments from each .eml file
+   - Generate SHA-256 hashes for extracted attachments
+   - Log sender domains and attachment information in `hashes.txt`
+   - Check sender domains against the MXToolbox blacklist
+   - Check attachment hashes using VirusTotal, MalShare, and MalwareBazaar APIs
+   - Display results and any security notices in the console
+
+## Output
+
+The tool generates two main outputs:
+
+1. `hashes.txt`: Contains logged information in the format:
+   ```
+   domain.com|file.txt: 2340000
+   ```
+
+2. Console output: Displays detailed results of domain and hash checks, including any security notices requiring action.
+
+## TODO
+
+-Check sender IP address to see if bad.
+
