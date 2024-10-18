@@ -4,9 +4,9 @@ This tool automates the process of extracting attachments from suspicious .eml f
 
 Prerequisites
 
-1. API Keys: Obtain the following free API keys and add them to your     config.ini file:
+1. API Keys: Obtain the following free API keys and add them to your config.ini file:
 
-      VirusTotal/MalShare/MXToolbox/Malware Hash Registry (MHR)
+      VirusTotal/MalShare/MXToolbox
 
 3. Folder Structure: Inside the SpamScan folder, create two subfolders:
    
@@ -29,5 +29,5 @@ Usage
 Domain and Hash Checks: The tool will then:
 
 - Check the sender's domain against the MXToolbox blacklist.
-- Check the attachment hash against VirusTotal without uploading the file (to prevent accidental data leaks), MHR & Malware.
-- Print out the results to the console.
+- Check the attachment hash against VirusTotal/MalShare/MalwareBazaar without uploading the file (to prevent accidental data leaks).
+- Print out the results with any notices to the console for action. 
