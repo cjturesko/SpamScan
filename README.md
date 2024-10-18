@@ -31,7 +31,7 @@ SpamScan is an automated tool for analyzing suspicious email attachments and sen
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/SpamScan.git
+   git clone https://github.com/cjturesko/SpamScan.git
    cd SpamScan
    ```
 
