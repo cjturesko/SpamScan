@@ -51,6 +51,7 @@ def checkDomain(hashFile):
                 print(f"Error processing entry in Check_domain: {entry}")
                 print(f"Error involving: {e}")
 
+
 def process_hashes(hashFile, scanner):
     with open(hashFile, 'r') as file:
         for entry in file:
@@ -126,8 +127,8 @@ def scan_MS(hash_value):
         print("Error with reply -- possible offline")
 
 def scan_MHR(hash_value, mhr_un, mhr_pw):
-    pass
     #issues with SSL but works
+    #pass
     '''
     url = f"https://hash.cymru.com/v2/{hash_value}"
     print(f'MHR url: --  {url}')
@@ -167,8 +168,14 @@ def scan_MB(hash_value):
     #check response data
     if response.status_code == 200:
         result = response.json()
-        print(f'MB response {result}')
-        return result # return parsed result
+        
+        if result.get('query_status') == 'hash_not_found':
+            # MB returns a hash_not_found
+            return None
+        if 'first_seen' in result:
+            print('Malware Bazaar Found Reult')
+        else:
+            print(f"Malware Bazaar found result for {hash_value} but 'first_seen' is not found")
 
     else:
         print(f"Error: Received status code {response.status_code}. Message: {response.text}")
@@ -178,23 +185,24 @@ def scan_MB(hash_value):
 
 
 def main():
-    spam_folder = "./SpamScan/potential_spam"  # Replace with actual path
-    attachments_folder = "./SpamScan/spam_attachments"  # Replace with actual path
-    hash_file_path = "./SpamScan/hashes.txt" # Replace with hashes.txt location
+    spam_folder = "/Users/ixu/Projects/SecTools/SpamScan/potential_spam"  # Replace with actual path
+    attachments_folder = "/Users/ixu/Projects/SecTools/SpamScan/spam_attachments"  # Replace with actual path
+    hash_file_path = "/Users/ixu/Projects/SecTools/SpamScan/hashes.txt" # Replace with hashes.txt location
     # Output path for results
 
     # Process all .eml files and extract attachments, and generate hashes
     process_eml_files(spam_folder, attachments_folder, hash_file_path)
-    hash_files_in_folder(attachments_folder, hash_file_path)
-    checkDomain(hash_file_path)
-    print("---Domain Check---")
-    process_hashes(hash_file_path, scan_VT)
-    print("---VirusTotal Scan Complete---")
-    process_hashes(hash_file_path, scan_MS)
-    print("---Malshare Scan Complete---")
-    process_hashes(hash_file_path, scan_MB)
-    print("---Malware Bazaar Scan Complete--")
-    #process_hashes(hash_file_path, scan_MHR)
+    #hash_files_in_folder(attachments_folder, hash_file_path)
+
+    process_hashes(hash_file_path,scan_VT)
+    print('--VirusTotal Scan Completed--\n')
+    process_hashes(hash_file_path, lambda hash_value: scan_MS(hash_value))
+    print('--Malshare Scan Completed--\n')
+    process_hashes(hash_file_path, lambda hash_value: scan_MB(hash_value))
+    print('--Malware Bazaar Scan Completed--\n')
+    #process_hashes(hash_file_path, lambda hash_value: scan_MHR(hash_value))
+
+
     
 
 if __name__== '__main__':
