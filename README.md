@@ -72,5 +72,5 @@ The tool generates two main outputs:
 
 ## TODO
 
-:heavy_check_mark:Check sender IP address to see if bad.
+:heavy_check_mark: Check sender IP address to see if bad.
 
