@@ -73,4 +73,6 @@ The tool generates two main outputs:
 ## TODO
 
 :heavy_check_mark: Check sender IP address to see if bad.
+Scan for URLs in the emails.
+   - Allow the user to decide which URLs are tested, to avoid unnessecary API calls/information leaks.
 
