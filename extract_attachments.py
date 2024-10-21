@@ -41,6 +41,17 @@ def extract_sender_email(message):
         return domain.group(1)
     else:
         return from_field # Return the whole field if not found
+def extract_links(message):
+    # regex http,https and www links
+    link_pattern = r"(https?://[^\s]+|ftps?://[^\s]+|www\.[^\s]+)"
+    links = re.findall(link_pattern, message)
+
+    if links:
+        print("*-*-Links Found-*-*")
+        for link in links:
+            print(link)
+    else:
+        print("No Links in EML")
 
 def extract_ip_and_spf(message):
     ip_address = None
