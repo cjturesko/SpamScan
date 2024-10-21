@@ -4,9 +4,11 @@ import hashlib
 import configparser
 import requests
 import re
+import time
+import json
 
 config = configparser.ConfigParser()
-config.read('/Users/ixu/Projects/SecTools/SpamScan/config.ini')
+config.read('./SecTools/SpamScan/config.ini')
 
 VIRUSTOTAL_API_KEY = config['DEFAULT']['VT_API_KEY']
 
@@ -41,18 +43,7 @@ def extract_sender_email(message):
         return domain.group(1)
     else:
         return from_field # Return the whole field if not found
-def extract_links(message):
-    # regex http,https and www links
-    link_pattern = r"(https?://[^\s]+|ftps?://[^\s]+|www\.[^\s]+)"
-    links = re.findall(link_pattern, message)
-
-    if links:
-        print("*-*-Links Found-*-*")
-        for index, link in enumerate(links, start=1):
-            print(f"{index}. {link}")
-    else:
-        print("No Links in EML")
-
+        
 def extract_links(message):
     # regex http,https and www links
     link_pattern = r"(https?://[^\s]+|ftps?://[^\s]+|www\.[^\s]+)"
@@ -82,7 +73,6 @@ def extract_links(message):
 
 def scan_url(url):
     api_url = 'https://urlscan.io/api/v1/scan/'
-    #submit the URL then wait to check result
     headers = {
         'Content-Type': 'application/json',
         'API-KEY': URLSCAN_API_KEY
@@ -96,19 +86,31 @@ def scan_url(url):
     if response.status_code == 200:
         result = response.json()
         uuid = result.get('uuid')
-        time.sleep(5)
-        check_url_scan_result(uuid)
-
-
-def check_url_scan_result(uuid):
-    result_url = f"https://urlscan.io/api/v1/result/{uuid}"
-    response = requests.get(result_url)
-
-    if response.status_code == 200:
-        result_data = response.json()
-        print("URL Scan Results: ", result_data)
+        print(f"URL scan submitted. UUID: {uuid}")
+        time.sleep(5)  # wait 5 seconds before checking results
+        wait_for_scan_result(uuid)  # Check result in a separate function
     else:
-        print(f"Error: {response.status_code}, {response.text}")
+        print(f"Error submitting scan: {response.status_code}, {response.text}")
+
+# Function to retry checking the scan result (with retries and delay)
+def wait_for_scan_result(uuid, retries=5, delay=5):
+    for attempt in range(retries):
+        result_url = f"https://urlscan.io/api/v1/result/{uuid}"
+        response = requests.get(result_url)
+
+        if response.status_code == 200:
+            result_data = response.json()
+            print("URL Scan Results: ", result_data)
+            break  # Scan is complete, exit loop
+        elif response.status_code == 404:
+            print(f"Attempt {attempt + 1}: Scan still processing, retrying in {delay} seconds...")
+            time.sleep(delay)  # Wait before retrying
+        else:
+            print(f"Error: {response.status_code}, {response.text}")
+            break  # Break out if there's another type of error
+
+    else:
+        print(f"Max retries reached. UUID {uuid} might still be processing. Check later.")
 
 def extract_ip_and_spf(message):
     ip_address = None
