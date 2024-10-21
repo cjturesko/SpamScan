@@ -11,6 +11,7 @@ config = configparser.ConfigParser()
 config.read('./SecTools/SpamScan/config.ini')
 
 VIRUSTOTAL_API_KEY = config['DEFAULT']['VT_API_KEY']
+URLSCAN_API_KEY = config['DEFAULT']['URLSCAN_API_KEY']
 
 def parse_message(filename):
     with open(filename) as f:
