@@ -48,8 +48,8 @@ def extract_links(message):
 
     if links:
         print("*-*-Links Found-*-*")
-        for link in links:
-            print(link)
+        for index, link in enumerate(links, start=1):
+            print(f"{index}. {link}")
     else:
         print("No Links in EML")
 
@@ -198,9 +198,9 @@ def process_eml_files(spam_folder, attachments_folder, hash_output_file):
             extract_attachments(eml_path, attachments_folder, hash_output_file)
 
 def main():
-    spam_folder = "/Users/ixu/Projects/SecTools/SpamScan/potential_spam"  # Replace with actual path
-    attachments_folder = "/Users/ixu/Projects/SecTools/SpamScan/spam_attachments"  # Replace with actual path
-    hash_output_file = "/Users/ixu/Projects/SecTools/SpamScan/hashes.txt"  # Path for the hash output file
+    spam_folder = "./SecTools/SpamScan/potential_spam"  # Replace with actual path
+    attachments_folder = "./SecTools/SpamScan/spam_attachments"  # Replace with actual path
+    hash_output_file = "./SecTools/SpamScan/hashes.txt"  # Path for the hash output file
 
     # Ensure the output file is empty before writing
     open(hash_output_file, 'w').close()
