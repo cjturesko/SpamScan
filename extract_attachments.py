@@ -7,7 +7,7 @@ import re
 import time
 
 config = configparser.ConfigParser()
-config.read('./SecTools/SpamScan/config.ini')
+config.read('./SpamScan/config.ini')
 
 VIRUSTOTAL_API_KEY = config['DEFAULT']['VT_API_KEY']
 URLSCAN_API_KEY = config['DEFAULT']['URLSCAN_API_KEY']
