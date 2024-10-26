@@ -5,7 +5,6 @@ import configparser
 import requests
 import re
 import time
-import json
 
 config = configparser.ConfigParser()
 config.read('./SecTools/SpamScan/config.ini')
@@ -49,28 +48,7 @@ def extract_links(message):
     # regex http,https and www links
     link_pattern = r"(https?://[^\s]+|ftps?://[^\s]+|www\.[^\s]+)"
     links = re.findall(link_pattern, message)
-
-    # move this code over to the main.py
-    if links:
-        print("*-*-Links Found-*-*")
-        for index, link in enumerate(links, start=1):
-            print(f"{index}. {link}")
-        #Choose numbers for links to scan
-        selected = input("Enter which numbers of the links you'd like to scan, separated by a comma")
-        selected_indices = [int(num.strip()) for num in selected.split(',') if num.strip().isdigit()]
-
-        #Process selected numbers
-        for i in selected_indices:
-            if 1 <= i <= len(links):
-                link_to_scan = links[i - 1]
-                print(f"Scanning link: {link_to_scan}")
-                # Call URLScan API to check URL
-                scan_url(link_to_scan)
-        
-            else:
-                print(f"Invalid selection: {i}")
-    else:
-        print("No Links in EML")
+    return links
 
 def scan_url(url):
     api_url = 'https://urlscan.io/api/v1/scan/'
@@ -129,7 +107,7 @@ def extract_ip_and_spf(message):
     # Function to extract IP from a string
     def extract_ip(text):
         # This pattern matches IPv4 addresses with any number of digits in each octet
-        ip_pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'
+        ip_pattern = r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
         match = re.search(ip_pattern, text)
         return match.group(0) if match else None
 
@@ -256,11 +234,32 @@ def process_eml_files(spam_folder, attachments_folder, hash_output_file):
             eml_path = os.path.join(spam_folder, filename)
             print(f"Processing {eml_path}...")
             extract_attachments(eml_path, attachments_folder, hash_output_file)
+            links = extract_links(eml_path)
+            if links:
+                print("*-*-Links Found-*-*")
+                for index, link in enumerate(links, start=1):
+                    print(f"{index}. {link}")
+                #Choose numbers for links to scan
+                selected = input("Enter which numbers of the links you'd like to scan, separated by a comma")
+                selected_indices = [int(num.strip()) for num in selected.split(',') if num.strip().isdigit()]
 
+                #Process selected numbers
+                for i in selected_indices:
+                    if 1 <= i <= len(links):
+                        link_to_scan = links[i - 1]
+                        print(f"Scanning link: {link_to_scan}")
+                        # Call URLScan API to check URL
+                        scan_url(link_to_scan)
+                
+                    else:
+                        print(f"Invalid selection: {i}")
+            else:
+                print("No Links in EML")
+            
 def main():
-    spam_folder = "./SecTools/SpamScan/potential_spam"  # Replace with actual path
-    attachments_folder = "./SecTools/SpamScan/spam_attachments"  # Replace with actual path
-    hash_output_file = "./SecTools/SpamScan/hashes.txt"  # Path for the hash output file
+    spam_folder = "./SpamScan/potential_spam"  # Replace with actual path
+    attachments_folder = "./SpamScan/spam_attachments"  # Replace with actual path
+    hash_output_file = "./SpamScan/hashes.txt"  # Path for the hash output file
 
     # Ensure the output file is empty before writing
     open(hash_output_file, 'w').close()
