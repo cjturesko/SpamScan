@@ -3,7 +3,6 @@ import json
 import requests
 from extract_attachments import process_eml_files
 from mx_domain_lookup import check_blacklist
-from extract_attachments import process_eml_files, check_ip_address
 
 config = configparser.ConfigParser()
 config.read('./SpamScan/config.ini')
@@ -196,7 +195,6 @@ def main():
     print('--Processing Emails--')
     process_eml_files(spam_folder, attachments_folder, hash_file_path)
     print('--Proccessed Emails')
-    #hash_files_in_folder(attachments_folder, hash_file_path)
     print('--VirusTotal Scan Started--')
     process_hashes(hash_file_path,lambda hash_value: scan_VT(hash_value))
     print('--VirusTotal Scan Completed--\n')
