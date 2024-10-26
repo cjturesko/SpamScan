@@ -1,325 +1,212 @@
-import os
-from email.parser import Parser
-import hashlib
 import configparser
-import requests
-import re
-import time
 import json
+import requests
+from extract_attachments import process_eml_files
+from mx_domain_lookup import check_blacklist
+from extract_attachments import process_eml_files, check_ip_address
 
 config = configparser.ConfigParser()
-config.read('./SecTools/SpamScan/config.ini')
+config.read('./SpamScan/config.ini')
 
 VIRUSTOTAL_API_KEY = config['DEFAULT']['VT_API_KEY']
+MAL_SHARE_API_KEY = config['DEFAULT']['MAL_SHARE_API_KEY']
+MAL_BAZAR_API_KEY = config['DEFAULT']['MAL_BAZAR_API_KEY']
+MX_API_KEY = config['DEFAULT']['MX_API_KEY']
 URLSCAN_API_KEY = config['DEFAULT']['URLSCAN_API_KEY']
+RESULTS = config['HASHES']['RESULTS_TXT']
 
-def parse_message(filename):
-    with open(filename) as f:
-        return Parser().parse(f)
+def checkDomain(hashFile):
+    with open(hashFile, "r") as file: #, open(RESULTS, 'w') as result_file:
+        for entry in file:
+            try:
+                domainName, ending = entry.strip().split('|')
+                url_base = 'https://mxtoolbox.com/api/v1/lookup/blacklist/'
+                url = url_base + domainName
+                headers = {
+                     'Authorization': MX_API_KEY
+                     }
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200:
+                    print("Response 200")
+                    responseData = response.json()
+                else:
+                    print("Response not 200!!")
+                    continue
 
-def find_attachments(message):
-    found = []
-    for part in message.walk():
-        if 'content-disposition' not in part:
-            continue
-        cdisp = part['content-disposition'].split(';')
-        cdisp = [x.strip() for x in cdisp]
-        if cdisp[0].lower() != 'attachment':
-            continue
-        parsed = {}
-        for kv in cdisp[1:]:
-            key, _, val = kv.partition('=')
-            if val.startswith('"'):
-                val = val.strip('"')
-            elif val.startswith("'"):
-                val = val.strip("'")
-            parsed[key] = val
-        found.append((parsed, part))
-    return found
+                failed = responseData.get('Failed', [])
+                warnings = responseData.get('Warnings', [])
 
-def extract_sender_email(message):
-    from_field = message['From']
-    domain = re.search(r'<(.+?)>', from_field)
-    if domain:
-        return domain.group(1)
-    else:
-        return from_field # Return the whole field if not found
-        
-def extract_links(message):
-    # regex http,https and www links
-    link_pattern = r"(https?://[^\s]+|ftps?://[^\s]+|www\.[^\s]+)"
-    links = re.findall(link_pattern, message)
+                if failed:
+                    numFailed = len(failed)
+                    print(f"{domainName}|BLACKLIST FAIL - {numFailed}|{ending}\n")
+                    #result_file.write(f"{domainName}|BLACKLIST FAIL - {numFailed}|{ending}\n")
+                elif warnings:
+                    numWarnings = len(warnings)
+                    print(f"{domainName}|BLACKLIST WARNING - {numWarnings}|{ending}\n")
+                    #result_file.write(f"{domainName}|BLACKLIST WARNING - {numWarnings}|{ending}\n")
+                else:
+                    #write the line in again regardless since it's open & being overwritten.
+                    #result_file.write(f"{domainName}|NO BLACKLIST|{ending}\n")
+                    print(f"The domain {domainName} is not blacklisted.")
+          
+            except ValueError as e:
+                print(f"Error processing entry in Check_domain: {entry}")
+                print(f"Error involving: {e}")
 
-    # move this code over to the main.py
-    if links:
-        print("*-*-Links Found-*-*")
-        for index, link in enumerate(links, start=1):
-            print(f"{index}. {link}")
-        #Choose numbers for links to scan
-        selected = input("Enter which numbers of the links you'd like to scan, separated by a comma")
-        selected_indices = [int(num.strip()) for num in selected.split(',') if num.strip().isdigit()]
 
-        #Process selected numbers
-        for i in selected_indices:
-            if 1 <= i <= len(links):
-                link_to_scan = links[i - 1]
-                print(f"Scanning link: {link_to_scan}")
-                # Call URLScan API to check URL
-                scan_url(link_to_scan)
-        
-            else:
-                print(f"Invalid selection: {i}")
-    else:
-        print("No Links in EML")
+def process_hashes(hashFile, scanner):
+    with open(hashFile, 'r') as file:
+        for entry in file:
+            try:
+                filename, hash_value = entry.strip().split(': ')
+                result = scanner(hash_value)
+                
+                if result:
+                    # will vary based on the api
+                    print(f"Hash {hash_value} scanned successfully. Result: {result}\n")
+                '''else:
+                    print(f"Hash {hash_value} not found or error occurred.")'''
+            except ValueError:
+                print(f'Error proccessing hash {entry.strip()}')
+                
+def scan_VT(hash_value):
+    if VIRUSTOTAL_API_KEY == '-' or not VIRUSTOTAL_API_KEY:
+        print('VirusTotal API Key blank --- skipped')
+        return
 
-def scan_url(url):
-    api_url = 'https://urlscan.io/api/v1/scan/'
+    url = f"https://www.virustotal.com/api/v3/files/{hash_value}"
     headers = {
-        'Content-Type': 'application/json',
-        'API-KEY': URLSCAN_API_KEY
-    }
-    data = {
-        "url": url, 
-        "visibility": "private"
-    }
-
-    response = requests.post(api_url, headers=headers, json=data)
-    if response.status_code == 200:
-        result = response.json()
-        uuid = result.get('uuid')
-        print(f"URL scan submitted. UUID: {uuid}")
-        time.sleep(5)  # wait 5 seconds before checking results
-        wait_for_scan_result(uuid)  # Check result in a separate function
-    else:
-        print(f"Error submitting scan: {response.status_code}, {response.text}")
-
-# Function to retry checking the scan result (with retries and delay)
-def wait_for_scan_result(uuid, retries=5, delay=5):
-    for attempt in range(retries):
-        result_url = f"https://urlscan.io/api/v1/result/{uuid}"
-        response = requests.get(result_url)
-
-        if response.status_code == 200:
-            result_data = response.json()
-            print("URL Scan Results: ", result_data)
-            break  # Scan is complete, exit loop
-        elif response.status_code == 404:
-            print(f"Attempt {attempt + 1}: Scan still processing, retrying in {delay} seconds...")
-            time.sleep(delay)  # Wait before retrying
-        else:
-            print(f"Error: {response.status_code}, {response.text}")
-            break  # Break out if there's another type of error
-
-    else:
-        print(f"Max retries reached. UUID {uuid} might still be processing. Check later.")
-
-def extract_ip_and_spf(message):
-    ip_address = None
-    spf_result = None
-
-    # Check SPF result
-    spf_header = message.get('Received-SPF')
-    if spf_header:
-        spf_result = 'SPF Pass'
-        if 'fail' in spf_header.lower():
-            spf_result = 'SPF Fail'
-        elif 'softfail' in spf_header.lower():
-            spf_result = 'SPF Softfail'
-
-    # Function to extract IP from a string
-    def extract_ip(text):
-        # This pattern matches IPv4 addresses with any number of digits in each octet
-        ip_pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'
-        match = re.search(ip_pattern, text)
-        return match.group(0) if match else None
-
-    # Try to find IP in various headers
-    headers_to_check = [
-        ('x-ms-exchange-organization-originalclientipaddress', lambda x: x),
-        ('Received-SPF', lambda x: x.split('client-ip=')[1].split()[0] if 'client-ip=' in x else None),
-        ('Received', lambda x: extract_ip(x))
-    ]
-
-    for header_name, extractor in headers_to_check:
-        header_value = message.get(header_name)
-        if header_value:
-            if isinstance(header_value, list):
-                for value in header_value:
-                    ip = extractor(value)
-                    if ip:
-                        ip_address = ip
-                        break
-            else:
-                ip = extractor(header_value)
-                if ip:
-                    ip_address = ip
-                    break
-
-        if ip_address:
-            break
-
-    return ip_address, spf_result
-
-def check_ip_address(ip_address):
-    url = f"https://www.virustotal.com/api/v3/ip_addresses/{ip_address}"
-    headers = {
-        "accept": "application/json",
         "x-apikey": VIRUSTOTAL_API_KEY
-        }
+    }
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        vtdata = response.json()
+
+        #Process VT results
+        detected_engines = []
+        clean_engines = []
+
+        #Loop through results
+        for engine, details in vtdata.get("data", {}).get("attributes", {}).get("last_analysis_results", {}).items():
+            if details['result'] is not None: #engine returned a result
+                detected_engines.append(engine)
+            else:
+                clean_engines.append(engine)
+
+        #Determine the status
+        if detected_engines:
+            status = "Malware Detected"
+            print(f"{status}: VirusTotal")
+            print(f"Hash {hash_value} - {status} (Detected by: {', '.join(detected_engines)})")
+            return f"Hash {hash_value} - {status} (Detected by: {', '.join(detected_engines)})"
+        else:
+            status = "Clean"
+            print(f"VirusTotal Clean")
+            return f"Hash {hash_value} - {status}"
+
+    else:
+        return f"Hash {hash_value} - Not Found"
+
+    
+    
+def scan_MS(hash_value):
+    url = f"https://malshare.com/api.php?api_key={MAL_SHARE_API_KEY}&action=search&query={hash_value}"
+    headers = {'User-Agent': 'MalShare API Tool v/0.1 beta'}
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
-        data = response.json()
-        last_analysis_results = data['data']['attributes']['last_analysis_results']
-
-        print('*-*-*-IP Check Lookup-*-*-*')
-        print(f"IP Address: {ip_address}")
-        print('*-*-*-*-*-*-*-*-*-*-*-*-*-*')
-        
-
-        for company, result in last_analysis_results.items():
-            if result['result'] in ['malware', 'suspicious']:
-                print("Companies flagging as malware or suspicious:")
-                print(f"   - {company}: {result['result']}")
-
-    else:
-        print(f"Error: Unable to check IP {response.status_code}")
-
-
-def sha256_hash_file(file_path):
-    sha256 = hashlib.sha256()
-    with open(file_path, 'rb') as f:
-        while chunk := f.read(8192):
-            sha256.update(chunk)
-    return sha256.hexdigest()
-
-def extract_attachments(eml_filename, output_dir, hash_output_file):
-    msg = parse_message(eml_filename)
-    attachments = find_attachments(msg)
-    sender_email = extract_sender_email(msg)
-    ip_address, spf_result = extract_ip_and_spf(msg)
-    
-    # Extract links using the pattern
-    link_pattern = r"(https?://[^\s]+|ftps?://[^\s]+|www\.[^\s]+)"
-    links = []
-    
-    # Search for links in the email body
-    if msg.is_multipart():
-        for part in msg.walk():
-            if part.get_content_type() in ["text/plain", "text/html"]:
-                content = part.get_payload(decode=True).decode()
-                links.extend(re.findall(link_pattern, content))
-    else:
-        content = msg.get_payload(decode=True).decode()
-        links.extend(re.findall(link_pattern, content))
-    
-    # Remove duplicates while preserving order
-    links = list(dict.fromkeys(links))
-
-    print(f"--Sender: {sender_email}")
-    print(f"--IP Address: {ip_address}")
-    print(f"SPF Result: {spf_result}")
-    
-    # Process links if found
-    if links:
-        print("\n*-*-Links Found-*-*")
-        for index, link in enumerate(links, start=1):
-            print(f"{index}. {link}")
-        
-        # Ask for user input
-    print("\nEnter the numbers of links to scan (e.g., '2' for second link, '1,2' for first and second)")
-    print("Enter '0' or 'all' to scan all links")
-    print("Or press Enter to skip URL scanning")
-    user_input = input().strip().lower()  # Convert to lowercase to handle 'ALL' or 'All' etc.
-
-    if user_input:  # Only process if user entered something
         try:
-            if user_input == '0' or user_input == 'all':
-                # Process all links
-                selected_indices = range(1, len(links) + 1)
-            else:
-                # Split input by comma and convert to list of integers
-                selected_indices = [int(num.strip()) for num in user_input.split(',')]
+            response_data = json.loads(response.text)
             
-            # Validate and scan selected links
-            for index in selected_indices:
-                if 1 <= index <= len(links):
-                    link_to_scan = links[index - 1]
-                    print(f"\nScanning link: {link_to_scan}")
-                    scan_result_uuid = scan_url(link_to_scan)
-                    if scan_result_uuid:
-                        wait_for_scan_result(scan_result_uuid)
-                else:
-                    print(f"Invalid selection: {index} - Skipping")
-        except ValueError as e:
-            print(f"Invalid input format: {e}")
+            if not response_data:
+                print("MalShare didnt find a result")
+            else:
+                print(f"Malshare found result {response_data}")
+            return response_data
+        except json.JSONDecodeError:
+            print("Error: Response not JSON")
     else:
-        print("\nNo Links found in EML")
+        print("Error with reply -- possible offline")
+
+def scan_MHR(hash_value, mhr_un, mhr_pw):
+    #issues with SSL but works
+    #pass
+    '''
+    url = f"https://hash.cymru.com/v2/{hash_value}"
+    print(f'MHR url: --  {url}')
+    # Make the GET request to the MHR API
+    response = requests.get(url, auth=HTTPBasicAuth(mhr_un, mhr_pw), verify=False)
     
-    if ip_address:
-        vt_results = check_ip_address(ip_address)
-        if vt_results:
-            print("IP Check Results: ")
-            for result in vt_results:
-                print(f" - {result}")
+    # Check if the response is successful (status code 200)
+    if response.status_code == 200:
+        try:
+            # Parse the response as JSON (assuming it returns JSON data)
+            data = response.json()
+        except ValueError:
+            print("Error: Unable to parse response as JSON")
+            return
+
+        # Check if the hash is found in the registry
+        if data.get('sha1256') is None:
+            print('Hash not found on Malware Hash Registry')
         else:
-            print("IP Check Clean")
+            print(f"Hash {data['sha1256']} found. AV Detection Rate: {data['antivirus_detection_rate']}")
+    else:
+        print(f"Error: Received status code {response.status_code}.")
+    '''
 
-    print("Found {0} attachments...".format(len(attachments)))
-    
-    # Extract domain from sender email
-    sender_domain = sender_email.split('@')[-1].strip('> ')
-    
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
-    
-    attachment_count = 1  # Counter for attachments without filenames
-    
-    for cdisp, part in attachments:
-        cdisp_filename = cdisp.get('filename', f"attachment_{attachment_count}")
-        cdisp_filename = os.path.normpath(cdisp_filename)
-        if os.path.isabs(cdisp_filename):
-            cdisp_filename = os.path.basename(cdisp_filename)
-        
-        towrite = os.path.join(output_dir, cdisp_filename)
-        print(f"Writing {towrite}")
-        
-        # Get the payload (attachment data) and decode it
-        data = part.get_payload(decode=True)
-        
-        # Check if the data is None (could happen if it's not decodable)
-        if data is None:
-            print(f"Warning: Could not decode attachment {cdisp_filename}. Skipping...")
-            continue  # Skip this attachment if decoding fails
+def scan_MB(hash_value):
+    url = "https://mb-api.abuse.ch/api/v1/"
 
-        # Write the decoded attachment data to the file
-        with open(towrite, 'wb') as fp:
-            fp.write(data)
+    #data for the post request
+    data = {
+        'query': 'get_info',
+        'hash': hash_value
+    }
 
-        # Calculate the hash of the written file
-        hash_value = sha256_hash_file(towrite)
-        
-        # Write the domain, filename, and hash to the output file
-        with open(hash_output_file, 'a') as hash_file:
-            hash_file.write(f"{sender_domain}|{cdisp_filename}: {hash_value}\n")
-        
-        attachment_count += 1  # Increment counter for next attachment
+    #Make the post request
+    response = requests.post(url, data=data)
 
-def process_eml_files(spam_folder, attachments_folder, hash_output_file):
-    for filename in os.listdir(spam_folder):
-        if filename.endswith(".eml"):
-            eml_path = os.path.join(spam_folder, filename)
-            print(f"Processing {eml_path}...")
-            extract_attachments(eml_path, attachments_folder, hash_output_file)
+    #check response data
+    if response.status_code == 200:
+        result = response.json()
+        
+        if result.get('query_status') == 'hash_not_found':
+            # MB returns a hash_not_found
+            return None
+        if 'first_seen' in result:
+            print('Malware Bazaar Found Reult')
+        else:
+            print(f"Malware Bazaar found result for {hash_value} but 'first_seen' is not found")
+
+    else:
+        print(f"Error: Received status code {response.status_code}. Message: {response.text}")
+        return None
+    
+        
+
 
 def main():
-    spam_folder = "./SecTools/SpamScan/potential_spam"  # Replace with actual path
-    attachments_folder = "./SecTools/SpamScan/spam_attachments"  # Replace with actual path
-    hash_output_file = "./SecTools/SpamScan/hashes.txt"  # Path for the hash output file
+    spam_folder = "./SpamScan/potential_spam"  # Replace with actual path
+    attachments_folder = "./SpamScan/spam_attachments"  # Replace with actual path
+    hash_file_path = "./SpamScan/hashes.txt" # Replace with hashes.txt location
+    # Output path for results
 
-    # Ensure the output file is empty before writing
-    open(hash_output_file, 'w').close()
+    # Process all .eml files and extract attachments, and generate hashes
+    print('--Processing Emails--')
+    process_eml_files(spam_folder, attachments_folder, hash_file_path)
+    print('--Proccessed Emails')
+    #hash_files_in_folder(attachments_folder, hash_file_path)
+    print('--VirusTotal Scan Started--')
+    process_hashes(hash_file_path,lambda hash_value: scan_VT(hash_value))
+    print('--VirusTotal Scan Completed--\n')
+    print('--Malshare Scan Started--')
+    process_hashes(hash_file_path, lambda hash_value: scan_MS(hash_value))
+    print('--Malshare Scan Completed--\n')
+    print('--Malware Bazaar Scan Started--')
+    process_hashes(hash_file_path, lambda hash_value: scan_MB(hash_value))
+    print('--Malware Bazaar Scan Completed--\n')
+    #process_hashes(hash_file_path, lambda hash_value: scan_MHR(hash_value))
 
-    process_eml_files(spam_folder, attachments_folder, hash_output_file)
-
-if __name__ == '__main__':
-    main()
+if __name__== '__main__':
+     main()
