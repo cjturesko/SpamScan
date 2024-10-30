@@ -5,6 +5,7 @@ import configparser
 import requests
 import re
 import time
+import quopri
 
 config = configparser.ConfigParser()
 config.read('./SpamScan/config.ini')
@@ -45,9 +46,23 @@ def extract_sender_email(message):
         return from_field # Return the whole field if not found
         
 def extract_links(message):
-    # regex http,https and www links
-    link_pattern = r"(https?://[^\s]+|ftps?://[^\s]+|www\.[^\s]+)"
-    links = re.findall(link_pattern, message)
+    links = []
+    
+    for part in message.walk():
+        # Only look at plain text or HTML parts
+        if part.get_content_type() in ['text/plain', 'text/html']:
+            payload = part.get_payload(decode=True)
+
+            # Decode quoted-printable encoding if needed
+            if part.get("Content-Transfer-Encoding") == "quoted-printable":
+                decoded_content = quopri.decodestring(payload).decode(part.get_content_charset() or 'utf-8', errors='ignore')
+            else:
+                decoded_content = payload.decode(part.get_content_charset() or 'utf-8', errors='ignore')
+            
+            # Find links in the decoded content
+            link_pattern = r'https?://[^\s<>"\']+|www\.[^\s<>"\']+'
+            links.extend(re.findall(link_pattern, decoded_content))
+
     return links
 
 def scan_url(url):
@@ -67,26 +82,30 @@ def scan_url(url):
         uuid = result.get('uuid')
         print(f"URL scan submitted. UUID: {uuid}")
         time.sleep(5)  # wait 5 seconds before checking results
-        wait_for_scan_result(uuid)  # Check result in a separate function
+        get_scan_results(uuid)  # Check result in a separate function
     else:
         print(f"Error submitting scan: {response.status_code}, {response.text}")
 
 # Function to retry checking the scan result (with retries and delay)
-def wait_for_scan_result(uuid, retries=5, delay=5):
+def get_scan_results(uuid):
+    result_url = f"https://urlscan.io/api/v1/result/{uuid}"
+    retries = 5
+    delay = 5
     for attempt in range(retries):
-        result_url = f"https://urlscan.io/api/v1/result/{uuid}"
         response = requests.get(result_url)
 
         if response.status_code == 200:
             result_data = response.json()
-            print("URL Scan Results: ", result_data)
+            verdicts = result_data.get('verdicts', {})
+            print("Verdicts:")
+            print(verdicts)
             break  # Scan is complete, exit loop
         elif response.status_code == 404:
             print(f"Attempt {attempt + 1}: Scan still processing, retrying in {delay} seconds...")
             time.sleep(delay)  # Wait before retrying
         else:
             print(f"Error: {response.status_code}, {response.text}")
-            break  # Break out if there's another type of error
+            break  # Break if another type of error
 
     else:
         print(f"Max retries reached. UUID {uuid} might still be processing. Check later.")
@@ -106,7 +125,6 @@ def extract_ip_and_spf(message):
 
     # Function to extract IP from a string
     def extract_ip(text):
-        # This pattern matches IPv4 addresses with any number of digits in each octet
         ip_pattern = r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
         match = re.search(ip_pattern, text)
         return match.group(0) if match else None
@@ -233,14 +251,18 @@ def process_eml_files(spam_folder, attachments_folder, hash_output_file):
         if filename.endswith(".eml"):
             eml_path = os.path.join(spam_folder, filename)
             print(f"Processing {eml_path}...")
-            extract_attachments(eml_path, attachments_folder, hash_output_file)
-            links = extract_links(eml_path)
+            
+            msg = parse_message(eml_path)  # Parse the .eml file
+            extract_attachments(eml_path, attachments_folder, hash_output_file)  # Process attachments
+            
+            # Extract and scan links
+            links = extract_links(msg)
             if links:
                 print("*-*-Links Found-*-*")
                 for index, link in enumerate(links, start=1):
                     print(f"{index}. {link}")
                 #Choose numbers for links to scan
-                selected = input("Enter which numbers of the links you'd like to scan, separated by a comma")
+                selected = input("Enter which numbers of the links you'd like to scan, separated by a comma ")
                 selected_indices = [int(num.strip()) for num in selected.split(',') if num.strip().isdigit()]
 
                 #Process selected numbers
