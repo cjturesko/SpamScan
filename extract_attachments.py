@@ -97,18 +97,58 @@ def get_scan_results(uuid):
         if response.status_code == 200:
             result_data = response.json()
             verdicts = result_data.get('verdicts', {})
-            print("Verdicts:")
-            print(verdicts)
+            #print("Verdicts:")
+            display_verdicts(verdicts)
             break  # Scan is complete, exit loop
         elif response.status_code == 404:
             print(f"Attempt {attempt + 1}: Scan still processing, retrying in {delay} seconds...")
             time.sleep(delay)  # Wait before retrying
         else:
             print(f"Error: {response.status_code}, {response.text}")
-            break  # Break if another type of error
+            break  # Break out if there's another type of error
 
     else:
         print(f"Max retries reached. UUID {uuid} might still be processing. Check later.")
+
+def display_verdicts(verdicts):
+    if not verdicts:
+        print("No verdicts found.")
+        return
+    # For the sections being displayed
+    sections = {
+        'Overall': verdicts.get('overall', {}),
+        'URLScan': verdicts.get('urlscan', {}),
+        'Engines': verdicts.get('engines', {}),
+        'Community': verdicts.get('community', {})
+    }
+
+    # Display results for each section
+    for section, data in sections.items():
+        print(f"\n=== {section} Verdicts ===")
+        score = data.get('score', 0)
+        is_malicious = data.get('malicious', False)
+        categories = data.get('categories', [])
+        brands = data.get('bands', [])
+        tags = data.get('tags', [])
+
+        print(f"Score: {score}")
+        print(f"Malicious: {is_malicious}")
+        if categories:
+            print(f"Categories: {', '.join(categories)}")
+        if brands:
+            print(f"Brands: {', '.join(brands)}")
+        if tags:
+            print(f"Tags: {', '.join(tags)}")
+
+        # Special handling for 'Engines' and 'Community' subcategories
+        if section == 'Engines':
+            print(f"Engines Total: {data.get('enginesTotal', 0)}")
+            print(f"Malicious Verdicts: {data.get('maliciousVerdicts', [])}")
+            print(f"Benign Verdicts: {data.get('benignVerdicts', [])}")
+        elif section == 'Community':
+            print(f"Votes Total: {data.get('votesTotal', 0)}")
+            print(f"Votes Malicious: {data.get('votesMalicious', 0)}")
+            print(f"Votes Benign: {data.get('votesBenign', 0)}")
 
 def extract_ip_and_spf(message):
     ip_address = None
@@ -125,6 +165,7 @@ def extract_ip_and_spf(message):
 
     # Function to extract IP from a string
     def extract_ip(text):
+        # This pattern matches IPv4 addresses
         ip_pattern = r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
         match = re.search(ip_pattern, text)
         return match.group(0) if match else None
@@ -154,7 +195,8 @@ def extract_ip_and_spf(message):
         if ip_address:
             break
 
-    return ip_address, spf_result
+    # Strip any trailing semicolon or whitespace from the final IP address
+    return ip_address.strip('; ') if ip_address else None, spf_result
 
 def check_ip_address(ip_address):
     url = f"https://www.virustotal.com/api/v3/ip_addresses/{ip_address}"
