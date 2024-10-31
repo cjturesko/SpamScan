@@ -196,7 +196,10 @@ def extract_ip_and_spf(message):
             break
 
     # Strip any trailing semicolon or whitespace from the final IP address
-    return ip_address.strip('; ') if ip_address else None, spf_result
+    if ip_address:
+        ip_address = ip_address.rstrip('; ')
+    
+    return ip_address, spf_result
 
 def check_ip_address(ip_address):
     url = f"https://www.virustotal.com/api/v3/ip_addresses/{ip_address}"
