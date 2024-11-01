@@ -7,8 +7,7 @@ SpamScan is an automated tool for analyzing suspicious email attachments and sen
 - Extracts attachments from .eml files
 - Generates SHA-256 hashes for attachments
 - Checks sender domains against MXToolbox blacklist
-- Checks for links within the email
-    -Sends the url to URL Scan to check
+- Checks for links within the email & scans via URLScan. 'all'/'a' or numbers
 - Verifies attachment hashes using VirusTotal, MalShare, and MalwareBazaar APIs
 - Logs results for easy review and action
 
