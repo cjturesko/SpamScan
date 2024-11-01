@@ -308,8 +308,11 @@ def process_eml_files(spam_folder, attachments_folder, hash_output_file):
                     print(f"{index}. {link}")
                 #Choose numbers for links to scan
                 selected = input("Enter which numbers of the links you'd like to scan, separated by a comma ")
-                selected_indices = [int(num.strip()) for num in selected.split(',') if num.strip().isdigit()]
-
+    
+                if selected.lower() in ('all', 'a'):
+                    selected_indices = list(range(1, len(links) + 1))  # Selects all indices
+                else:
+                    selected_indices = [int(num.strip()) for num in selected.split(',') if num.strip().isdigit()]
                 #Process selected numbers
                 for i in selected_indices:
                     if 1 <= i <= len(links):
