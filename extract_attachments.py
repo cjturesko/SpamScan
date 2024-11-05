@@ -307,7 +307,7 @@ def process_eml_files(spam_folder, attachments_folder, hash_output_file):
                 for index, link in enumerate(links, start=1):
                     print(f"{index}. {link}")
                 #Choose numbers for links to scan
-                selected = input("Enter which numbers of the links you'd like to scan, separated by a comma ")
+                selected = input("Enter #,# or a/all for all ")
     
                 if selected.lower() in ('all', 'a'):
                     selected_indices = list(range(1, len(links) + 1))  # Selects all indices
