@@ -1,8 +1,8 @@
 import configparser
 import json
 import requests
+import time
 from extract_attachments import process_eml_files
-from mx_domain_lookup import check_blacklist
 
 config = configparser.ConfigParser()
 config.read('./SpamScan/config.ini')
@@ -59,6 +59,7 @@ def process_hashes(hashFile, scanner):
             try:
                 filename, hash_value = entry.strip().split(': ')
                 result = scanner(hash_value)
+                time.sleep(int(config['VIRUSTOTAL']['WAIT_TIME']))
                 
                 if result:
                     # will vary based on the api
