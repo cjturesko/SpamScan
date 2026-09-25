@@ -37,12 +37,7 @@ SpamScan is an automated tool for analyzing suspicious email attachments and sen
    cd SpamScan
    ```
 
-2. Install required dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-3. Set up your `config.ini` file with the obtained API keys.
+2. Set up your `config.ini` file with the obtained API keys.
 
 ## Usage
 
